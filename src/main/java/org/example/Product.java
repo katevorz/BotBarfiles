@@ -1,19 +1,23 @@
 package org.example;
 
+import java.math.BigDecimal;
+
 public class Product {
     private final String name;
     private final String photoId;
     private final String description;
-    private final String price;
+    private final BigDecimal price;
     private final String phoneNumber;
-    private Category category;
+    private final Category categoryName;
 
-    public Product(String name, String price, String description, String phoneNumber, String photoId) {
+    public Product(String name,Category categoryName, BigDecimal price, String description, String phoneNumber, String photoId) {
         this.name = name;
-        this.photoId = photoId;
-        this.description = description;
+        this.categoryName = categoryName;
         this.price = price;
+        this.description = description;
         this.phoneNumber = phoneNumber;
+        this.photoId = photoId;
+
     }
 
     public String getName() {
@@ -28,7 +32,7 @@ public class Product {
         return description;
     }
 
-    public String getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -37,7 +41,7 @@ public class Product {
     }
 
     public Category getCategory() {
-        return category;
+        return categoryName;
     }
 }
 

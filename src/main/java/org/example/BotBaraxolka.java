@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,9 +37,17 @@ public class BotBaraxolka extends TelegramLongPollingBot {
     public String getBotToken() {
         return "7591311099:AAHUxm40Jo-IBXovfw89bkIPlLPG9PBcuXY"; // Замените на токен вашего бота
     }
+    private void saveProductToDatabase(Product product) {
+        Database.insertProduct(
+                product.getName(),
+                product.getCategory().getName(),
+                Double.parseDouble(product.getPrice().toString()),
+                product.getDescription(),
+                product.getPhoneNumber(),
+                product.getPhotoId()
 
-
-
+        );
+    }
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
@@ -118,12 +127,15 @@ public class BotBaraxolka extends TelegramLongPollingBot {
     private void handlePhotoMessage(long chatId, Update update) {
         String productName = addingState.get(chatId);
         if (productName != null && !productName.isEmpty()) {
-        // Предполагается, что фото будет сохранено и связано с товаром
-        sendResponse(chatId, "Фото получено! Ваш товар был успешно добавлен.");
-        String photoId = update.getMessage().getPhoto().get(0).getFileId(); // Получаем ID фото
-        //System.out.println("Photo ID: " + photoId); // Логируем
-        // Добавляем товар с фото в список
-        listings.add(new Product(productName, priceState.get(chatId), descriptionState.get(chatId), phoneState.get(chatId), photoId));
+            // Предполагается, что фото будет сохранено и связано с товаром
+            sendResponse(chatId, "Фото получено! Ваш товар был успешно добавлен.");
+            String photoId = update.getMessage().getPhoto().get(0).getFileId(); // Получаем ID фото
+            //System.out.println("Photo ID: " + photoId); // Логируем
+            // Добавляем товар с фото в список
+            Product product = new Product(productName, categoryState.get(chatId), new BigDecimal(priceState.get(chatId)), descriptionState.get(chatId), phoneState.get(chatId), photoId);
+            listings.add(product);
+            saveProductToDatabase(product);
+
         }
         sendWelcomeMessage(chatId);
 
@@ -134,7 +146,6 @@ public class BotBaraxolka extends TelegramLongPollingBot {
         descriptionState.remove(chatId);
         phoneState.remove(chatId);
     }
-
 
     private void sendWelcomeMessage(long chatId) {
         String welcomeText = "Добро пожаловать в Marketplace Bot! Используйте кнопки ниже для взаимодействия.";
@@ -193,12 +204,13 @@ public class BotBaraxolka extends TelegramLongPollingBot {
     }
 
     private void sendListings(long chatId) {
-        if (listings.isEmpty()) {
+        List<Product> products = Database.getProducts();
+        if (products.isEmpty()) {
             sendResponse(chatId, "Список объявлений пуст.");
             return;
         }
 
-        for (Product product : listings) {
+        for (Product product : products) {
             sendPhoto(chatId, product);
         }
     }
@@ -241,6 +253,5 @@ public class BotBaraxolka extends TelegramLongPollingBot {
         categories.add(new Category("Одежда"));
         categories.add(new Category("Книги"));
     }
-
 }
 
