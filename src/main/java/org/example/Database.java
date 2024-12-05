@@ -80,4 +80,28 @@ public class Database {
         }
         return products;
     }
+    public static List<Product> searchProducts(String keyword) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT * FROM Products WHERE name LIKE ? OR category LIKE ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            pstmt.setString(2, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    products.add(new Product(
+                            rs.getString("name"),
+                            new Category(rs.getString("category")),
+                            rs.getBigDecimal("price"),
+                            rs.getString("description"),
+                            rs.getString("phoneNumber"),
+                            rs.getString("photoId")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
 }

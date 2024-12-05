@@ -56,6 +56,14 @@ public class BotBaraxolka extends TelegramLongPollingBot {
             if (update.getMessage().hasText()) {
                 String messageText = update.getMessage().getText();
 
+                // Handle search state
+                if (addingState.containsKey(chatId) && addingState.get(chatId).equals("Searching")) {
+                    //sendResponse(chatId, "Введите название товара, который вы хотите найти:");
+                    performSearch(chatId, messageText);
+                    addingState.remove(chatId);
+                    return;
+                }
+
                 // Проверяем состояние добавления товара
                 if (addingState.containsKey(chatId)) {
                     if (categoryState.get(chatId) == null) {
@@ -112,12 +120,29 @@ public class BotBaraxolka extends TelegramLongPollingBot {
             case "Показать все товары":
                 sendListings(chatId);
                 break;
+            case "Пойск товар":
+                initiateSearch(chatId);
+                break;
             default:
                 sendResponse(chatId, "Используйте кнопку 'Добавить товар' для добавления товара или 'Показать все товары' для просмотра.");
                 break;
         }
     }
+    private void initiateSearch(long chatId){
+        addingState.put(chatId, "Searching");
+        sendResponse(chatId, "Введите ключевое слово для поиска:");
+    }
+    private void performSearch(long chatId, String keyword) {
+        List<Product> results = Database.searchProducts(keyword);
 
+        if (results.isEmpty()) {
+            sendResponse(chatId, "По вашему запросу ничего не найдено.");
+        } else {
+            for (Product product : results) {
+                sendPhoto(chatId, product);
+            }
+        }
+    }
     private void initiateProductAddition(long chatId) {
         addingState.put(chatId, ""); // Инициализируем состояние добавления товара
         categoryState.put(chatId, null); // Сбрасываем состояние категории
@@ -155,11 +180,16 @@ public class BotBaraxolka extends TelegramLongPollingBot {
 
         // Создаем клавиатуру
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        KeyboardRow row = new KeyboardRow();
-        row.add("Добавить товар");
-        row.add("Показать все товары");
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add("Добавить товар");
+        row1.add("Показать все товары");
+
+        KeyboardRow row2 = new KeyboardRow();
+        row2.add("Пойск товар");
+
         List<KeyboardRow> keyboard = new ArrayList<>();
-        keyboard.add(row);
+        keyboard.add(row1);
+        keyboard.add(row2);
         keyboardMarkup.setKeyboard(keyboard);
 
         message.setReplyMarkup(keyboardMarkup);
